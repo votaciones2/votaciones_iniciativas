@@ -1,4 +1,4 @@
-# Votación Big Rocks — v2 (proyecto nuevo desde cero)
+# Votación  — v2 (proyecto nuevo desde cero)
 
 Front en **GitHub Pages** + API en **Google Apps Script** + datos en **Google Sheets**.
 
