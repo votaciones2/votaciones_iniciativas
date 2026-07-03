@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Votación Big Rocks</title>
+  <style>
+    :root{
+      --bg:#f2f4f2; --card:#ffffff; --ink:#17211c; --muted:#68736c;
+      --line:#dde3dd; --accent:#0f6e56; --accent-d:#0b5644; --accent-soft:#e3efe9;
+      --bad:#b4452f; --gold:#caa53d;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      line-height:1.5;-webkit-font-smoothing:antialiased}
+    .wrap{max-width:720px;margin:0 auto;padding:24px 16px 70px}
+    .nav{display:flex;gap:8px;margin-bottom:18px}
+    .nav a{font-size:13px;text-decoration:none;color:var(--muted);
+      padding:7px 12px;border:1px solid var(--line);border-radius:999px;background:#fff}
+    .nav a.activo{color:#fff;background:var(--accent);border-color:var(--accent)}
+    .brand{display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:#fff;
+      font-size:12px;font-weight:700;padding:5px 14px;border-radius:999px;margin-left:auto}
+    h1{font-size:24px;font-weight:800;letter-spacing:-.02em;margin:0 0 4px}
+    .sub{color:var(--muted);font-size:15px;margin:0 0 20px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:14px}
+    label.f{display:block;font-size:13px;font-weight:600;color:var(--muted);margin-bottom:6px}
+    input[type=text],textarea{width:100%;border:1.5px solid var(--line);border-radius:10px;
+      padding:11px 12px;font:inherit;color:var(--ink);background:#fff;outline:none}
+    input[type=text]:focus,textarea:focus{border-color:var(--accent)}
+    .fila{display:flex;gap:12px;flex-wrap:wrap}
+    .fila>div{flex:1;min-width:180px}
+    .tipo{display:flex;gap:8px;margin-top:4px}
+    .tipo label{flex:1;position:relative}
+    .tipo input{position:absolute;inset:0;opacity:0;cursor:pointer}
+    .tipo span{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px;
+      border:1.5px solid var(--line);border-radius:10px;font-weight:600;color:var(--muted);cursor:pointer}
+    .tipo input:checked+span{background:var(--accent);border-color:var(--accent);color:#fff}
+    #cajaCodigo{display:none;margin-top:12px}
+    /* Acordeón de big rocks */
+    .rock{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:12px;overflow:hidden}
+    .rock-head{display:flex;align-items:center;gap:12px;padding:16px 18px;cursor:pointer;user-select:none}
+    .rock-num{width:34px;height:34px;flex:0 0 34px;border-radius:9px;background:var(--accent-soft);
+      color:var(--accent);font-weight:800;display:flex;align-items:center;justify-content:center}
+    .rock-nombre{font-weight:700;font-size:15px;flex:1}
+    .rock-estado{font-size:12px;font-weight:700;color:var(--muted)}
+    .rock-estado.listo{color:var(--accent)}
+    .chev{color:var(--muted);transition:.2s}
+    .rock.abierto .chev{transform:rotate(180deg)}
+    .rock-body{display:none;padding:0 18px 18px;border-top:1px solid var(--line)}
+    .rock.abierto .rock-body{display:block}
+    /* Criterio */
+    .crit{border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:14px}
+    .crit-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
+    .crit-nombre{font-weight:700;font-size:15px}
+    .pts{font-size:12px;font-weight:700;color:var(--accent);background:var(--accent-soft);
+      padding:4px 12px;border-radius:999px;white-space:nowrap}
+    .escala{display:flex;gap:8px;justify-content:center;margin:6px 0 12px}
+    .opt{position:relative}
+    .opt input{position:absolute;inset:0;opacity:0;width:100%;height:100%;margin:0;cursor:pointer}
+    .opt span{display:flex;align-items:center;justify-content:center;width:46px;height:46px;
+      border:1.5px solid var(--line);border-radius:50%;font-weight:700;color:var(--muted);
+      transition:.12s;cursor:pointer;user-select:none;background:#fff}
+    .opt input:checked+span{background:var(--accent);border-color:var(--accent);color:#fff;
+      box-shadow:0 0 0 4px var(--accent-soft)}
+    .opt input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+    .anclas{display:flex;gap:10px}
+    .anclas div{flex:1;font-size:12.5px;color:var(--muted);background:#f6f8f6;
+      border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+    .anclas div:last-child{text-align:right}
+    .crit.falta{border-color:var(--bad)}
+    .crit.falta .crit-nombre::after{content:" • falta";color:var(--bad);font-size:12px}
+    .btn-rock{width:100%;border:0;border-radius:11px;background:var(--accent);color:#fff;
+      font:inherit;font-weight:700;font-size:15px;padding:13px;cursor:pointer;margin-top:14px}
+    .btn-rock:hover{background:var(--accent-d)}
+    .btn-rock:disabled{opacity:.55;cursor:default}
+    .msg-rock{font-size:13.5px;margin-top:8px;min-height:16px}
+    .msg-rock.err{color:var(--bad)}
+    .msg-rock.okmsg{color:var(--accent);font-weight:600}
+    .votado{display:flex;align-items:center;gap:10px;background:var(--accent-soft);
+      border-radius:11px;padding:14px;margin-top:14px;color:var(--accent);font-weight:700}
+    .cargando{color:var(--muted);text-align:center;padding:40px}
+    .error-caja{border:1px solid var(--bad);color:var(--bad);border-radius:14px;padding:16px;background:#fff}
+    @media(max-width:480px){
+      .opt span{width:40px;height:40px}
+      .anclas{flex-direction:column}
+      .anclas div:last-child{text-align:left}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <nav class="nav">
+      <a class="activo" href="index.html">Votar</a>
+      <a href="resultados.html">Resultados</a>
+      <span class="brand">Grupo epm</span>
+    </nav>
+
+    <h1>Votación Big Rocks</h1>
+    <p class="sub">Ingresa tus datos y califica cada big rock a medida que se expone. Cada criterio se califica de 1 a 5.</p>
+
+    <div class="card">
+      <div class="fila">
+        <div>
+          <label class="f" for="nombre">Nombre</label>
+          <input type="text" id="nombre" autocomplete="name" placeholder="Tu nombre">
+        </div>
+        <div>
+          <label class="f" for="area">Área / equipo</label>
+          <input type="text" id="area" placeholder="Tu área">
+        </div>
+      </div>
+      <div style="margin-top:14px">
+        <label class="f">Tipo de votante</label>
+        <div class="tipo">
+          <label><input type="radio" name="tipo" value="Público" checked><span>Público</span></label>
+          <label><input type="radio" name="tipo" value="Comité"><span>Comité técnico</span></label>
+        </div>
+        <div id="cajaCodigo">
+          <label class="f" for="codigo">Código del comité</label>
+          <input type="text" id="codigo" inputmode="numeric" placeholder="Código entregado al comité" style="max-width:260px">
+        </div>
+      </div>
+    </div>
+
+    <div id="rocks"><div class="cargando">Cargando big rocks…</div></div>
+  </div>
+
+  <script src="config.js"></script>
+  <script>
+    var CFG = null;
+    var votadas = {}; // rockId -> true en esta sesión
+
+    document.querySelectorAll('input[name="tipo"]').forEach(function (r) {
+      r.addEventListener('change', function () {
+        document.getElementById('cajaCodigo').style.display =
+          (document.querySelector('input[name="tipo"]:checked').value === 'Comité') ? 'block' : 'none';
+      });
+    });
+
+    fetch(API_URL + '?action=config')
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (res && res.ok) { CFG = res.data; pintar(); }
+        else errorCarga((res && res.msg) || 'Respuesta inválida del servidor.');
+      })
+      .catch(function (e) { errorCarga(e.message || String(e)); });
+
+    function errorCarga(detalle) {
+      document.getElementById('rocks').innerHTML =
+        '<div class="error-caja"><b>No se pudieron cargar las big rocks.</b><br>' +
+        '<span style="font-size:13px">' + esc(detalle) + '</span></div>';
+    }
+
+    function pintar() {
+      var cont = document.getElementById('rocks');
+      cont.innerHTML = '';
+      CFG.bigrocks.forEach(function (rock, i) {
+        var div = document.createElement('div');
+        div.className = 'rock' + (i === 0 ? ' abierto' : '');
+        div.id = 'rock_' + rock.id;
+
+        var critsHtml = CFG.criterios.map(function (c, k) {
+          var esc5 = '';
+          for (var n = 1; n <= 5; n++) {
+            esc5 += '<label class="opt"><input type="radio" name="r' + rock.id + '_c' + c.id +
+                    '" value="' + n + '"><span>' + n + '</span></label>';
+          }
+          return '<div class="crit" id="crit_' + rock.id + '_' + c.id + '">' +
+                   '<div class="crit-top"><div class="crit-nombre">' + (k + 1) + '. ' + esc(c.nombre) +
+                   '</div><div class="pts">' + c.pts + ' pts</div></div>' +
+                   '<div class="escala">' + esc5 + '</div>' +
+                   '<div class="anclas"><div>' + esc(c.texto1) + '</div><div>' + esc(c.texto5) + '</div></div>' +
+                 '</div>';
+        }).join('');
+
+        div.innerHTML =
+          '<div class="rock-head" onclick="toggleRock(\'' + rock.id + '\')">' +
+            '<div class="rock-num">' + esc(rock.id) + '</div>' +
+            '<div class="rock-nombre">' + esc(rock.nombre) + '</div>' +
+            '<div class="rock-estado" id="estado_' + rock.id + '">Pendiente</div>' +
+            '<div class="chev">▾</div>' +
+          '</div>' +
+          '<div class="rock-body">' + critsHtml +
+            '<div class="crit" style="border-style:dashed">' +
+              '<label class="f" for="obs_' + rock.id + '">Observaciones (opcional)</label>' +
+              '<textarea id="obs_' + rock.id + '" rows="3" placeholder="Comentarios sobre esta big rock…"></textarea>' +
+            '</div>' +
+            '<button class="btn-rock" id="btn_' + rock.id + '" onclick="enviar(\'' + rock.id + '\')">Enviar voto de esta big rock</button>' +
+            '<div class="msg-rock" id="msg_' + rock.id + '"></div>' +
+          '</div>';
+        cont.appendChild(div);
+      });
+    }
+
+    function toggleRock(id) {
+      document.getElementById('rock_' + id).classList.toggle('abierto');
+    }
+
+    function enviar(rockId) {
+      var nombre = document.getElementById('nombre').value.trim();
+      var area = document.getElementById('area').value.trim();
+      var tipo = document.querySelector('input[name="tipo"]:checked').value;
+      var codigo = document.getElementById('codigo').value.trim();
+      var msg = document.getElementById('msg_' + rockId);
+      msg.className = 'msg-rock err';
+
+      if (!nombre || !area) { msg.textContent = 'Escribe tu nombre y tu área (arriba).'; return; }
+      if (tipo === 'Comité' && !codigo) { msg.textContent = 'Ingresa el código del comité (arriba).'; return; }
+
+      var notas = {}, faltan = false;
+      CFG.criterios.forEach(function (c) {
+        var sel = document.querySelector('input[name="r' + rockId + '_c' + c.id + '"]:checked');
+        var caja = document.getElementById('crit_' + rockId + '_' + c.id);
+        if (!sel) { faltan = true; caja.classList.add('falta'); }
+        else { caja.classList.remove('falta'); notas[c.nombre] = Number(sel.value); }
+      });
+      if (faltan) { msg.textContent = 'Califica los 4 criterios de esta big rock.'; return; }
+
+      var btn = document.getElementById('btn_' + rockId);
+      btn.disabled = true; btn.textContent = 'Enviando…'; msg.textContent = '';
+
+      fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({
+          nombre: nombre, area: area, tipo: tipo, codigo: codigo,
+          bigrock: rockId, notas: notas,
+          observaciones: document.getElementById('obs_' + rockId).value.trim()
+        })
+      })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+          if (res && res.ok) {
+            votadas[rockId] = true;
+            marcarVotada(rockId);
+          } else {
+            msg.className = 'msg-rock err';
+            msg.textContent = (res && res.msg) || 'No se pudo registrar el voto.';
+            btn.disabled = false; btn.textContent = 'Enviar voto de esta big rock';
+          }
+        })
+        .catch(function (e) {
+          msg.className = 'msg-rock err';
+          msg.textContent = 'Error de conexión: ' + (e.message || e);
+          btn.disabled = false; btn.textContent = 'Enviar voto de esta big rock';
+        });
+    }
+
+    function marcarVotada(rockId) {
+      var estado = document.getElementById('estado_' + rockId);
+      estado.textContent = '✓ Votada'; estado.classList.add('listo');
+      var body = document.querySelector('#rock_' + rockId + ' .rock-body');
+      body.innerHTML = '<div class="votado">✓ Tu voto para esta big rock quedó registrado. ¡Gracias!</div>';
+      // Colapsa la votada y abre la siguiente pendiente
+      document.getElementById('rock_' + rockId).classList.remove('abierto');
+      for (var i = 0; i < CFG.bigrocks.length; i++) {
+        var id = CFG.bigrocks[i].id;
+        if (!votadas[id]) { document.getElementById('rock_' + id).classList.add('abierto'); break; }
+      }
+    }
+
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+  </script>
+</body>
+</html>

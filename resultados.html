@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Resultados de la votación</title>
+  <style>
+    :root{
+      --bg:#f2f4f2; --card:#ffffff; --ink:#17211c; --muted:#68736c;
+      --line:#dde3dd; --accent:#0f6e56; --accent-d:#0b5644; --accent-soft:#e3efe9;
+      --gold:#c9a227; --gold-soft:#f7edcf; --silver:#8f979e; --silver-soft:#eceff1;
+      --bronze:#b0773a; --bronze-soft:#f3e5d5;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      line-height:1.5;-webkit-font-smoothing:antialiased}
+    .wrap{max-width:860px;margin:0 auto;padding:24px 16px 70px}
+    .nav{display:flex;gap:8px;margin-bottom:18px;align-items:center}
+    .nav a{font-size:13px;text-decoration:none;color:var(--muted);
+      padding:7px 12px;border:1px solid var(--line);border-radius:999px;background:#fff}
+    .nav a.activo{color:#fff;background:var(--accent);border-color:var(--accent)}
+    .brand{display:inline-flex;align-items:center;background:var(--accent);color:#fff;
+      font-size:12px;font-weight:700;padding:5px 14px;border-radius:999px;margin-left:auto}
+    .top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+    h1{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:0}
+    h1 .verde{color:var(--accent)}
+    .peso{color:var(--muted);font-size:13px;margin:4px 0 0}
+    .refresh{font-size:13px;border:1px solid var(--line);background:#fff;color:var(--muted);
+      border-radius:999px;padding:7px 14px;cursor:pointer}
+    .refresh:hover{border-color:var(--accent);color:var(--accent)}
+    /* KPIs */
+    .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin:18px 0 26px}
+    .kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;
+      border-top:4px solid var(--accent)}
+    .kpi:nth-child(2){border-top-color:#1d5c8f}
+    .kpi:nth-child(3){border-top-color:var(--gold)}
+    .kpi:nth-child(4){border-top-color:#7a4fa3}
+    .kpi .t{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+    .kpi .v{font-size:30px;font-weight:800;letter-spacing:-.03em;margin:2px 0}
+    .kpi .s{font-size:12px;color:var(--muted)}
+    /* Podio */
+    .podio{display:flex;align-items:flex-end;gap:12px;margin-bottom:8px}
+    .pcol{flex:1;display:flex;flex-direction:column}
+    .pcard{background:var(--card);border:2px solid var(--line);border-radius:14px 14px 0 0;
+      padding:18px 14px;text-align:center;position:relative;border-bottom:0}
+    .pcol.oro .pcard{border-color:var(--gold)}
+    .pcol.plata .pcard{border-color:var(--silver)}
+    .pcol.bronce .pcard{border-color:var(--bronze)}
+    .medalla{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+      font-weight:800;color:#fff;margin:-35px auto 8px;border:3px solid var(--bg)}
+    .oro .medalla{background:var(--gold)} .plata .medalla{background:var(--silver)} .bronce .medalla{background:var(--bronze)}
+    .pnombre{font-weight:700;font-size:13.5px;min-height:60px;display:flex;align-items:center;justify-content:center}
+    .pfinal{font-size:34px;font-weight:800;letter-spacing:-.03em}
+    .oro .pfinal{color:var(--gold)} .plata .pfinal{color:var(--silver)} .bronce .pfinal{color:var(--bronze)}
+    .pfinal small{font-size:13px;color:var(--muted);font-weight:600}
+    .pvotos{font-size:12px;color:var(--muted)}
+    .pnota{font-size:11px;color:var(--bronze);font-weight:700;margin-top:4px;min-height:14px}
+    .pbase{color:#fff;font-weight:800;font-size:22px;text-align:center;border-radius:0 0 10px 10px;
+      display:flex;align-items:center;justify-content:center}
+    .oro .pbase{background:var(--gold);height:86px}
+    .plata .pbase{background:var(--silver);height:58px}
+    .bronce .pbase{background:var(--bronze);height:40px}
+    /* Resto ranking */
+    .resto-t{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:26px 0 10px}
+    .fila-r{background:var(--card);border:1px solid var(--line);border-radius:12px;
+      display:flex;align-items:center;gap:14px;padding:14px 16px;margin-bottom:8px}
+    .fila-r .pos{font-weight:800;color:var(--muted);width:30px}
+    .fila-r .nom{flex:1;font-weight:600;font-size:14.5px}
+    .fila-r .fin{font-weight:800;font-size:19px;color:var(--accent)}
+    .fila-r .fin small{font-size:11px;color:var(--muted);font-weight:600}
+    .fila-r .vts{font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:3px 10px;white-space:nowrap}
+    .fila-r .flag{font-size:11px;color:var(--bronze);font-weight:700}
+    /* Observaciones */
+    h2{font-size:18px;font-weight:800;margin:30px 0 10px}
+    .obs{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent-soft);
+      border-radius:10px;padding:12px 14px;margin-bottom:8px;font-size:14px}
+    .obs .quien{color:var(--muted);font-size:12px;margin-top:4px}
+    .obs .rockTag{display:inline-block;font-size:11px;font-weight:700;color:var(--accent);
+      background:var(--accent-soft);border-radius:999px;padding:2px 10px;margin-bottom:6px}
+    .vacio{color:var(--muted);text-align:center;padding:46px;background:#fff;border:1px solid var(--line);border-radius:14px}
+    .cargando{color:var(--muted);text-align:center;padding:46px}
+    @media(max-width:640px){
+      .podio{flex-direction:column;align-items:stretch}
+      .pcol{order:2} .pcol.oro{order:1}
+      .pbase{height:34px !important}
+      .medalla{margin-top:-16px}
+      .pnombre{min-height:0}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <nav class="nav">
+      <a href="index.html">Votar</a>
+      <a class="activo" href="resultados.html">Resultados</a>
+      <span class="brand">Grupo epm</span>
+    </nav>
+
+    <div class="top">
+      <div>
+        <h1>Resultados <span class="verde">de la votación</span></h1>
+        <p class="peso" id="pesoTxt"></p>
+      </div>
+      <button class="refresh" onclick="cargar()">↻ Actualizar</button>
+    </div>
+
+    <div id="contenido"><div class="cargando">Cargando resultados…</div></div>
+  </div>
+
+  <script src="config.js"></script>
+  <script>
+    function cargar() {
+      document.getElementById('contenido').innerHTML = '<div class="cargando">Cargando…</div>';
+      fetch(API_URL + '?action=resultados')
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+          if (res && res.ok) pintar(res.data);
+          else errorC((res && res.msg) || 'Respuesta inválida.');
+        })
+        .catch(function (e) { errorC(e.message || String(e)); });
+    }
+
+    function errorC(d) {
+      document.getElementById('contenido').innerHTML =
+        '<div class="vacio" style="color:#b4452f">No se pudieron cargar los resultados.<br><small>' + esc(d) + '</small></div>';
+    }
+
+    function pintar(d) {
+      document.getElementById('pesoTxt').textContent =
+        'Puntaje sobre 100 · Comité ' + d.pesoComite + '% · Público ' + d.pesoPublico + '%';
+
+      var html = '';
+
+      // KPIs
+      html += '<div class="kpis">' +
+        kpi('Calificaciones', d.totalVotos, 'votos registrados') +
+        kpi('Evaluadores', d.votantesUnicos, 'personas únicas') +
+        kpi('Big rocks', d.numBigRocks, 'en evaluación') +
+        kpi('Promedio global', d.promedioGlobal === null ? '—' : d.promedioGlobal,
+            d.numComentarios + ' comentarios escritos') +
+      '</div>';
+
+      var conDatos = d.resumen.filter(function (r) { return r.final !== null; });
+      var sinDatos = d.resumen.filter(function (r) { return r.final === null; });
+
+      if (!conDatos.length) {
+        html += '<div class="vacio">Todavía no hay votos. Comparte el link para empezar.</div>';
+      } else {
+        // Podio (hasta 3)
+        var top = conDatos.slice(0, 3);
+        var clases = ['oro', 'plata', 'bronce'];
+        var orden = top.length === 3 ? [1, 0, 2] : (top.length === 2 ? [1, 0] : [0]);
+        html += '<div class="podio">';
+        orden.forEach(function (idx) {
+          var r = top[idx];
+          var cl = clases[idx];
+          html += '<div class="pcol ' + cl + '">' +
+            '<div class="pcard">' +
+              '<div class="medalla">' + (idx + 1) + '</div>' +
+              '<div class="pnombre">' + esc(r.nombre) + '</div>' +
+              '<div class="pfinal">' + r.final.toFixed(1) + ' <small>/ 100</small></div>' +
+              '<div class="pvotos">' + r.votos + ' votos (' + r.votosComite + ' comité · ' + r.votosPublico + ' público)</div>' +
+              '<div class="pnota">' + flag(r.estado) + '</div>' +
+            '</div>' +
+            '<div class="pbase">' + (idx + 1) + '°</div>' +
+          '</div>';
+        });
+        html += '</div>';
+
+        // Resto del ranking
+        var resto = conDatos.slice(3).concat(sinDatos);
+        if (resto.length) {
+          html += '<div class="resto-t">Resto del ranking</div>';
+          resto.forEach(function (r, i) {
+            var pos = i + 4;
+            html += '<div class="fila-r">' +
+              '<div class="pos">' + (r.final === null ? '—' : pos + '°') + '</div>' +
+              '<div class="nom">' + esc(r.nombre) +
+                (flag(r.estado) ? ' <span class="flag">' + flag(r.estado) + '</span>' : '') + '</div>' +
+              '<div class="vts">' + r.votos + ' votos</div>' +
+              '<div class="fin">' + (r.final === null ? 'Sin votos' : r.final.toFixed(1) + ' <small>/100</small>') + '</div>' +
+            '</div>';
+          });
+        }
+      }
+
+      // Observaciones
+      if (d.observaciones && d.observaciones.length) {
+        html += '<h2>Observaciones (' + d.observaciones.length + ')</h2>';
+        d.observaciones.forEach(function (o) {
+          html += '<div class="obs">' +
+            '<span class="rockTag">' + esc(corto(o.bigrock)) + '</span><br>' +
+            esc(o.texto) +
+            '<div class="quien">' + esc([o.nombre, o.area, o.tipo].filter(Boolean).join(' · ')) + '</div>' +
+          '</div>';
+        });
+      }
+
+      document.getElementById('contenido').innerHTML = html;
+    }
+
+    function kpi(t, v, s) {
+      return '<div class="kpi"><div class="t">' + t + '</div><div class="v">' + v + '</div><div class="s">' + s + '</div></div>';
+    }
+    function flag(estado) {
+      if (estado === 'pendiente comité') return 'Pendiente comité';
+      if (estado === 'pendiente público') return 'Pendiente público';
+      return '';
+    }
+    function corto(nombre) {
+      var m = String(nombre).match(/^Big Rock \d+/i);
+      return m ? m[0] : nombre;
+    }
+    function esc(s) {
+      return String(s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+
+    cargar();
+  </script>
+</body>
+</html>
