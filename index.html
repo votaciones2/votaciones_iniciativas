@@ -313,14 +313,28 @@
       var btn = document.getElementById('btn_' + rockId);
       btn.disabled = true; btn.textContent = 'Enviando…'; msg.textContent = '';
 
+      var payload = JSON.stringify({
+        nombre: nombre, area: area, tipo: tipo, codigo: codigo,
+        bigrock: rockId, notas: notas,
+        observaciones: document.getElementById('obs_' + rockId).value.trim()
+      });
+
+      // Envío con reintentos automáticos: si hay congestión, lo intenta hasta 3 veces solo
+      intentarEnvio(payload, rockId, btn, msg, 1);
+    }
+
+    function esErrorDeCongestion(texto) {
+      return /bloqueo|espera|lock|timeout|conexi/i.test(String(texto || ''));
+    }
+
+    function intentarEnvio(payload, rockId, btn, msg, intento) {
+      var MAX = 3;
+      btn.textContent = intento === 1 ? 'Enviando…' : ('Reintentando (' + intento + ' de ' + MAX + ')…');
+
       fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({
-          nombre: nombre, area: area, tipo: tipo, codigo: codigo,
-          bigrock: rockId, notas: notas,
-          observaciones: document.getElementById('obs_' + rockId).value.trim()
-        })
+        body: payload
       })
         .then(function (r) { return r.json(); })
         .then(function (res) {
@@ -329,21 +343,32 @@
             guardarMemoria();
             marcarVotada(rockId);
           } else if (res && res.msg && res.msg.indexOf('Ya registramos tu voto') === 0) {
-            // El servidor dice que ya estaba votada: sincroniza la vista y sigue
             votadas[rockId] = true;
             guardarMemoria();
             marcarVotada(rockId);
+          } else if (res && esErrorDeCongestion(res.msg) && intento < MAX) {
+            reintentar(payload, rockId, btn, msg, intento);
           } else {
-            msg.className = 'msg-rock err';
-            msg.textContent = (res && res.msg) || 'No se pudo registrar el voto.';
-            btn.disabled = false; btn.textContent = 'Enviar voto de esta big rock';
+            fallo(btn, msg, (res && res.msg) || 'No se pudo registrar el voto.');
           }
         })
         .catch(function (e) {
-          msg.className = 'msg-rock err';
-          msg.textContent = 'Error de conexión: ' + (e.message || e);
-          btn.disabled = false; btn.textContent = 'Enviar voto de esta big rock';
+          if (intento < MAX) reintentar(payload, rockId, btn, msg, intento);
+          else fallo(btn, msg, 'Hay muchos votos entrando al tiempo. Espera unos segundos y vuelve a dar Enviar: tu voto no se pierde.');
         });
+    }
+
+    function reintentar(payload, rockId, btn, msg, intento) {
+      msg.className = 'msg-rock';
+      msg.textContent = 'Muchos votos al tiempo, reintentando automáticamente…';
+      var espera = 1500 + Math.random() * 3000; // 1.5 a 4.5 s, aleatorio para descongestionar
+      setTimeout(function () { intentarEnvio(payload, rockId, btn, msg, intento + 1); }, espera);
+    }
+
+    function fallo(btn, msg, texto) {
+      msg.className = 'msg-rock err';
+      msg.textContent = texto;
+      btn.disabled = false; btn.textContent = 'Enviar voto de esta big rock';
     }
 
     function marcarVotada(rockId) {
