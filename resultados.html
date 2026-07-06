@@ -234,7 +234,9 @@
     }
     function corto(nombre) {
       var m = String(nombre).match(/^Big Rock \d+/i);
-      return m ? m[0] : nombre;
+      if (m) return m[0];
+      var s = String(nombre).replace(/^Big Rock:?\s*/i, '').trim();
+      return s.length > 34 ? s.slice(0, 32) + '…' : s;
     }
     function esc(s) {
       return String(s).replace(/[&<>"']/g, function (c) {
